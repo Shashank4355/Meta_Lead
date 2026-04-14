@@ -1,26 +1,370 @@
 @import "tailwindcss";
 
+/* ========================================
+   INDUSTRIAL UTILITARIAN — Design System
+   ======================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core palette */
+  --bg:           #15171C; /* Main deep dark background */
+  --bg-white:     #1E2129; /* Card background */
+  --bg-alt:       #242833; /* Alternating dark background */
+  --bg-hero:      #15171C; /* Same as bg */
+  --bg-footer:    #0D0F12; /* Even darker footer */
+  
+  --fg:           #D1D5DB; /* light gray body */
+  --fg-h1:        #FFFFFF; /* white headings */
+  --fg-h3:        #E5E7EB;
+  --fg-muted:     #9CA3AF;
+  --fg-white:     #FFFFFF;
+
+  --grid:         #2D323C; /* subtle dark border */
+  --accent:       #F59E0B; /* Golden Orange */
+  --accent-hover: #D97706;
+  --accent-ghost: rgba(245, 158, 11, 0.1);
+  --success:      #10B981; /* Green */
+  --highlight:    #FCD34D;
+
+  /* Typography */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'IBM Plex Sans', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+
+  /* Spacing base = 8px */
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: 24px;
+  --sp-4: 32px;
+  --sp-5: 40px;
+  --sp-6: 48px;
+  --sp-8: 64px;
+  --sp-12: 96px;
+  --sp-16: 128px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-white: var(--bg-white);
+  --color-bg-alt: var(--bg-alt);
+  --color-bg-hero: var(--bg-hero);
+  --color-bg-footer: var(--bg-footer);
+
+  --color-fg: var(--fg);
+  --color-fg-h1: var(--fg-h1);
+  --color-fg-h3: var(--fg-h3);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-white: var(--fg-white);
+
+  --color-grid: var(--grid);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ghost: var(--accent-ghost);
+  --color-success: var(--success);
+  --color-highlight: var(--highlight);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ========================================
+   Base Reset & Typography
+   ======================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--fg-h1);
+}
+
+h3, h4, h5, h6 {
+  color: var(--fg-h3);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--highlight) !important;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+/* ========================================
+   Structural Utilities
+   ======================================== */
+
+.border-grid {
+  border: 1px solid var(--grid);
+}
+
+.border-grid-b {
+  border-bottom: 1px solid var(--grid);
+}
+
+.border-grid-t {
+  border-top: 1px solid var(--grid);
+}
+
+.border-grid-r {
+  border-right: 1px solid var(--grid);
+}
+
+.border-grid-l {
+  border-left: 1px solid var(--grid);
+}
+
+.border-grid-x {
+  border-left: 1px solid var(--grid);
+  border-right: 1px solid var(--grid);
+}
+
+/* Page container — the visible structural column */
+.page-frame {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-left: 1px solid var(--grid);
+  border-right: 1px solid var(--grid);
+  min-height: 100vh;
+}
+
+/* Monospace label style */
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* Primary CTA button — hard rectangle, instant hover */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background-color: var(--accent);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 6px;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Secondary/outline button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background-color: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 6px;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--accent-ghost);
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98) translateY(0);
+}
+
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 
+   Interactive Micro-interactions 
+*/
+.interactive-cell {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  will-change: transform, background-color;
+}
+
+.interactive-cell:hover {
+  background-color: var(--bg-alt);
+}
+
+.nav-link {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 2px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.svg-interactive-node {
+  transition: filter 0.3s ease;
+}
+
+.svg-interactive-node:hover {
+  filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.4));
+  cursor: crosshair;
+}
+
+/* ========================================
+   Pipeline SVG Animation
+   ======================================== */
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.4; r: 4; }
+  50% { opacity: 1; r: 6; }
+}
+
+@keyframes node-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pipeline-line {
+  stroke-dasharray: 8 6;
+  animation: dash-flow 1s linear infinite;
+}
+
+.pipeline-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.pipeline-node {
+  animation: node-appear 0.6s ease-out both;
+}
+
+.pipeline-node:nth-child(2) { animation-delay: 0.2s; }
+.pipeline-node:nth-child(3) { animation-delay: 0.4s; }
+.pipeline-node:nth-child(4) { animation-delay: 0.6s; }
+
+/* ========================================
+   Live Activity Animations
+   ======================================== */
+
+@keyframes vertical-loop {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); } /* Slide up by half the height (since content is doubled) */
+}
+
+.activity-loop-container {
+  display: flex;
+  flex-direction: column;
+  animation: vertical-loop 20s linear infinite;
+}
+
+.activity-loop-container:hover {
+  animation-play-state: paused;
+}
+
+.badge-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-hot { background: rgba(30, 64, 175, 0.2); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.2); }
+.badge-warm { background: rgba(245, 158, 11, 0.1); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2); }
+.badge-cold { background: rgba(75, 85, 99, 0.1); color: #9CA3AF; border: 1px solid rgba(156, 163, 175, 0.2); }
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.status-dot-pulse {
+  animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================
+   Focus & Accessibility
+   ======================================== */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: #ffffff;
 }
