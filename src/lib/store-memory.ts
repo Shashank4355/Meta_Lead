@@ -184,6 +184,11 @@ function db(): Db {
     return g.__vectorLeadDb;
 }
 
+/** Mock has no User table — the id is used as-is. */
+export async function ensureUser(authId: string, _email: string | null): Promise<string> {
+    return authId;
+}
+
 function withAttempts(lead: Lead): Lead {
     const attempts = db()
         .callAttempts.filter((c) => c.leadId === lead.id)

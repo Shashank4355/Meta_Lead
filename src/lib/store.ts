@@ -14,6 +14,7 @@ import * as sb from './store-supabase';
 
 const impl = hasSupabase() ? sb : mem;
 
+export const ensureUser = impl.ensureUser;
 export const listLeads = impl.listLeads;
 export const getLead = impl.getLead;
 export const getLeadByIdInternal = impl.getLeadByIdInternal;

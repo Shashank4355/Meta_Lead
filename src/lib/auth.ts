@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { hasSupabaseAuth, DEMO_USER } from './config';
 import { getUserFromToken } from './supabase-server';
+import { ensureUser } from './store';
 
 export interface AuthUser {
     id: string;
@@ -36,5 +37,7 @@ export async function requireUser(request: NextRequest): Promise<AuthUser> {
     const user = await getUserFromToken(token);
     if (!user) throw new UnauthorizedError('Invalid or expired session');
 
-    return { id: user.id, email: user.email ?? null };
+    // Map the Supabase auth id to the internal User.id used by the data model.
+    const internalId = await ensureUser(user.id, user.email ?? null);
+    return { id: internalId, email: user.email ?? null };
 }
