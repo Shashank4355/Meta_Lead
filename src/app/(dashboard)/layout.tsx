@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -17,6 +17,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
 
     useEffect(() => {
+        // Demo mode: no Supabase configured → skip the auth guard entirely.
+        if (!isSupabaseConfigured) {
+            setUser({ email: 'demo@vectorlead.app' });
+            return;
+        }
         const supabase = createClient();
         supabase.auth.getSession().then(({ data }) => {
             if (!data.session) {
@@ -28,6 +33,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, [router]);
 
     const handleLogout = async () => {
+        if (!isSupabaseConfigured) {
+            router.push('/login');
+            return;
+        }
         const supabase = createClient();
         await supabase.auth.signOut();
         router.push('/login');

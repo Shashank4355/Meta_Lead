@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -17,6 +17,12 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        // Demo mode: no Supabase configured → go straight to the dashboard.
+        if (!isSupabaseConfigured) {
+            router.push('/dashboard');
+            return;
+        }
 
         const supabase = createClient();
 
@@ -73,6 +79,12 @@ export default function LoginPage() {
                     </div>
 
                     <div className="p-8">
+                        {!isSupabaseConfigured && (
+                            <div className="p-4 border-grid mb-6 text-sm font-medium bg-amber-50 text-amber-800 border-amber-200" style={{ fontFamily: "var(--font-mono)" }}>
+                                Demo mode — Supabase isn&apos;t configured. Click{' '}
+                                {isSignUp ? 'CREATE ACCOUNT' : 'AUTHENTICATE'} to enter with sample data.
+                            </div>
+                        )}
                         {error && (
                             <div className={`p-4 border-grid mb-6 text-sm font-medium ${error.includes('Check your email') ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`} style={{ fontFamily: "var(--font-mono)" }}>
                                 {error}

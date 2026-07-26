@@ -1,8 +1,17 @@
-import { createClient } from './supabase';
+import { createClient, isSupabaseConfigured } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// The API now lives in this same Next.js app (src/app/api/**), so requests are
+// relative by default. Override NEXT_PUBLIC_API_URL only to point at a separate
+// backend host.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+    // Demo mode: no Supabase configured. Skip session lookup entirely —
+    // createClient() would throw with empty URL/key.
+    if (!isSupabaseConfigured) {
+        return { 'Content-Type': 'application/json' };
+    }
+
     const supabase = createClient();
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;

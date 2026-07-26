@@ -17,6 +17,8 @@ export default function DashboardPage() {
     const [analytics, setAnalytics] = useState<Record<string, number>>({});
     const [leads, setLeads] = useState<Array<Record<string, unknown>>>([]);
     const [loading, setLoading] = useState(true);
+    const [callingId, setCallingId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
@@ -30,19 +32,26 @@ export default function DashboardPage() {
             ]);
             setAnalytics(analyticsData);
             setLeads(leadsData.leads as Array<Record<string, unknown>>);
+            setError(null);
         } catch (err) {
             console.error('Failed to load dashboard data:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
         } finally {
             setLoading(false);
         }
     }
 
     async function handleCallNow(leadId: string) {
+        setCallingId(leadId);
+        setError(null);
         try {
             await triggerCall(leadId);
-            loadData();
+            await loadData();
         } catch (err) {
             console.error('Failed to trigger call:', err);
+            setError(err instanceof Error ? err.message : 'Failed to start call');
+        } finally {
+            setCallingId(null);
         }
     }
 
@@ -57,6 +66,12 @@ export default function DashboardPage() {
     return (
         <div className="p-8">
             <h1 className="text-2xl font-bold text-white mb-8">Dashboard</h1>
+
+            {error && (
+                <div className="mb-6 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    {error}
+                </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -107,10 +122,10 @@ export default function DashboardPage() {
                                     <td className="px-6 py-4">
                                         <button
                                             onClick={() => handleCallNow(lead.id as string)}
-                                            disabled={lead.status === 'CALLING'}
+                                            disabled={lead.status === 'CALLING' || callingId === lead.id}
                                             className="px-3 py-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-medium hover:bg-indigo-500/20 transition disabled:opacity-30 disabled:cursor-not-allowed"
                                         >
-                                            📞 Call Now
+                                            {callingId === lead.id || lead.status === 'CALLING' ? '⏳ Calling…' : '📞 Call Now'}
                                         </button>
                                     </td>
                                 </tr>

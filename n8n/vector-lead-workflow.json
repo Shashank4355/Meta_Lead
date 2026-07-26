@@ -1,0 +1,130 @@
+{
+  "name": "Vector Lead — Hybrid Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vector-lead/call",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000001",
+      "name": "Call Requested",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-40, 200],
+      "webhookId": "vector-lead-call"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer YOUR_VAPI_API_KEY" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ phoneNumberId: 'YOUR_VAPI_PHONE_NUMBER_ID', customer: { number: ($json.body.lead.phone || '').replace(/\\s+/g, '') }, assistant: { firstMessage: ($json.body.agent.firstMessage || 'Hello').replace('{{name}}', $json.body.lead.name), model: { provider: 'anthropic', model: $json.body.agent.aiModel }, voice: { provider: $json.body.agent.voiceProvider, voiceId: $json.body.agent.voiceId }, server: { url: 'REPLACE_WITH_VAPI_END_WEBHOOK_URL' } }, metadata: { attemptId: $json.body.attemptId, callbackUrl: $json.body.callbackUrl } }) }}",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000002",
+      "name": "Vapi Place Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, vapiCallId: $json.id }) }}",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000003",
+      "name": "Ack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [480, 200]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vector-lead/vapi-end",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000011",
+      "name": "Vapi Call Ended",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-40, 520],
+      "webhookId": "vector-lead-vapi-end"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "YOUR_ANTHROPIC_API_KEY" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 1024, system: 'You are a real-estate lead qualification analyst. Read the call transcript and return ONLY a JSON object with keys: score (0-100 int), qualificationStatus, confirmedBudget, timeline, isDecisionMaker (bool), location, keyRequirements, notes.', messages: [ { role: 'user', content: 'Transcript:\\n' + ($json.body.message.artifact && $json.body.message.artifact.transcript ? $json.body.message.artifact.transcript : ($json.body.message.transcript || '')) } ] }) }}",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000012",
+      "name": "Anthropic Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shape Anthropic output + Vapi metadata into the app callback payload.\nconst end = $('Vapi Call Ended').first().json.body.message;\nconst meta = (end.call && end.call.metadata) || {};\nconst raw = $json.content && $json.content[0] ? $json.content[0].text : '{}';\nlet parsed = {};\ntry { parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)); } catch (e) {}\nconst score = Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0)));\nconst status = score >= 75 ? 'QUALIFIED' : score >= 45 ? 'FOLLOW_UP' : 'DISQUALIFIED';\nconst reason = end.endedReason || '';\nconst answered = !/no-answer|did-not-answer|busy|failed|voicemail/i.test(reason);\nreturn [{ json: {\n  callbackUrl: meta.callbackUrl,\n  event: 'call.completed',\n  data: {\n    attemptId: meta.attemptId,\n    answered,\n    transcript: (end.artifact && end.artifact.transcript) || end.transcript || '',\n    recordingUrl: (end.artifact && end.artifact.recordingUrl) || end.recordingUrl || '',\n    durationSeconds: end.durationSeconds,\n    score,\n    status,\n    summary: parsed\n  }\n} }];"
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000013",
+      "name": "Build Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 520]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.callbackUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-n8n-secret", "value": "YOUR_N8N_WEBHOOK_SECRET" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: $json.event, data: $json.data }) }}",
+        "options": {}
+      },
+      "id": "b1a1c001-0000-4000-8000-000000000014",
+      "name": "Callback to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, 520]
+    }
+  ],
+  "connections": {
+    "Call Requested": { "main": [[{ "node": "Vapi Place Call", "type": "main", "index": 0 }]] },
+    "Vapi Place Call": { "main": [[{ "node": "Ack", "type": "main", "index": 0 }]] },
+    "Vapi Call Ended": { "main": [[{ "node": "Anthropic Score", "type": "main", "index": 0 }]] },
+    "Anthropic Score": { "main": [[{ "node": "Build Result", "type": "main", "index": 0 }]] },
+    "Build Result": { "main": [[{ "node": "Callback to App", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

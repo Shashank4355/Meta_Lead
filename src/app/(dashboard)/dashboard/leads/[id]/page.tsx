@@ -9,6 +9,8 @@ export default function LeadDetailPage() {
     const router = useRouter();
     const [lead, setLead] = useState<Record<string, unknown> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [calling, setCalling] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadLead();
@@ -22,6 +24,20 @@ export default function LeadDetailPage() {
             console.error('Failed to load lead');
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleCall() {
+        if (!lead) return;
+        setCalling(true);
+        setError(null);
+        try {
+            await triggerCall(lead.id as string);
+            await loadLead();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to start call');
+        } finally {
+            setCalling(false);
         }
     }
 
@@ -52,13 +68,19 @@ export default function LeadDetailPage() {
                     <p className="text-slate-400 mt-1">{lead.phone as string} {(lead.email as string) ? `• ${lead.email as string}` : ''}</p>
                 </div>
                 <button
-                    onClick={async () => { await triggerCall(lead.id as string); loadLead(); }}
-                    disabled={lead.status === 'CALLING'}
+                    onClick={handleCall}
+                    disabled={lead.status === 'CALLING' || calling}
                     className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition disabled:opacity-30 shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-purple-500"
                 >
-                    📞 Call Now
+                    {calling || lead.status === 'CALLING' ? '⏳ Calling…' : '📞 Call Now'}
                 </button>
             </div>
+
+            {error && (
+                <div className="mb-6 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    {error}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Lead Info */}
