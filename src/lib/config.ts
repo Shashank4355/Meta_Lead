@@ -14,6 +14,18 @@ export const config = {
         phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID || '',
         assistantId: process.env.VAPI_ASSISTANT_ID || '',
     },
+    livekit: {
+        url: process.env.LIVEKIT_URL || '',
+        apiKey: process.env.LIVEKIT_API_KEY || '',
+        apiSecret: process.env.LIVEKIT_API_SECRET || '',
+        // Outbound SIP trunk that dials the lead's phone (PSTN).
+        sipTrunkId: process.env.LIVEKIT_SIP_TRUNK_ID || '',
+        // Name the qualification agent registers under (agent worker).
+        agentName: process.env.LIVEKIT_AGENT_NAME || 'lead-qualifier',
+        // Shared secret the agent worker sends (x-livekit-secret) when posting
+        // the transcript back to /api/webhooks/livekit.
+        webhookSecret: process.env.LIVEKIT_WEBHOOK_SECRET || '',
+    },
     anthropic: {
         apiKey: process.env.ANTHROPIC_API_KEY || '',
         model: process.env.ANTHROPIC_MODEL || 'claude-opus-4-8',
@@ -48,6 +60,19 @@ export const hasSupabaseAuth = () =>
 
 export const hasVapi = () =>
     !config.forceMock && Boolean(config.vapi.apiKey && config.vapi.phoneNumberId);
+
+/** True when LiveKit is configured for outbound SIP voice calls. */
+export const hasLiveKit = () =>
+    !config.forceMock &&
+    Boolean(
+        config.livekit.url &&
+            config.livekit.apiKey &&
+            config.livekit.apiSecret &&
+            config.livekit.sipTrunkId
+    );
+
+/** Any real (async, webhook-completed) voice provider is configured. */
+export const hasAsyncVoice = () => hasVapi() || hasLiveKit();
 
 export const hasAnthropic = () => !config.forceMock && Boolean(config.anthropic.apiKey);
 

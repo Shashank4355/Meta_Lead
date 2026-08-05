@@ -10,7 +10,7 @@ import { placeCall } from './providers/voice';
 import { scoreTranscript, ScoringResult } from './providers/scoring';
 import { notifyQualified } from './providers/notify';
 import { triggerN8nCall } from './providers/n8n';
-import { hasVapi, hasN8n, config } from './config';
+import { hasAsyncVoice, hasN8n, config } from './config';
 import type { Lead } from './types';
 
 /**
@@ -42,11 +42,14 @@ export async function startCall(lead: Lead): Promise<{ attemptId: string }> {
         return { attemptId: attempt.id };
     }
 
-    const result = await placeCall(lead, agent);
+    const result = await placeCall(lead, agent, {
+        attemptId: attempt.id,
+        callbackUrl: `${config.appUrl}/api/webhooks/livekit`,
+    });
     await updateCallAttempt(attempt.id, { providerCallId: result.providerCallId });
 
-    if (hasVapi()) {
-        // Real telephony: the webhook will complete + score this call.
+    if (hasAsyncVoice()) {
+        // Real telephony (LiveKit/Vapi): the webhook completes + scores.
         await updateCallAttempt(attempt.id, { status: 'IN_PROGRESS' });
         return { attemptId: attempt.id };
     }

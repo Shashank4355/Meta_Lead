@@ -1,4 +1,5 @@
-import { config, hasVapi } from '../config';
+import { config, hasVapi, hasLiveKit } from '../config';
+import { placeLiveKitCall } from './livekit';
 import type { Lead, AgentConfig } from '../types';
 
 export interface PlaceCallResult {
@@ -11,12 +12,20 @@ export interface PlaceCallResult {
 }
 
 /**
- * Start an outbound qualification call.
- * Real mode: Vapi places the call; the transcript arrives later via the
- * /api/webhooks/vapi handler. Mock mode: simulate a completed call so the
- * whole linking→calling→scoring flow is demoable without telephony.
+ * Start an outbound qualification call. Provider precedence:
+ *   LiveKit (SIP + agent) → Vapi → mock.
+ * Real providers place the call and deliver the transcript later via their
+ * webhook (/api/webhooks/livekit or /api/webhooks/vapi). Mock mode simulates
+ * a completed call so the whole linking→calling→scoring flow is demoable.
  */
-export async function placeCall(lead: Lead, agent: AgentConfig): Promise<PlaceCallResult> {
+export async function placeCall(
+    lead: Lead,
+    agent: AgentConfig,
+    ctx?: { attemptId: string; callbackUrl: string }
+): Promise<PlaceCallResult> {
+    if (hasLiveKit() && ctx) {
+        return placeLiveKitCall(lead, agent, ctx.attemptId, ctx.callbackUrl);
+    }
     if (hasVapi()) {
         return placeVapiCall(lead, agent);
     }
